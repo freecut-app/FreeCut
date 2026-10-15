@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' freecut:; img-src 'self' freecut: data: blob:; media-src 'self' freecut: blob: data:; script-src 'self' freecut: 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:; connect-src 'self' freecut: data: blob:">
+<title>FreeCut</title>
+<link rel="icon" href="icon.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand"><img class="logo-img" src="icon.png" alt=""><b>Free</b>Cut</div>
+    <div class="menu-wrap">
+      <button class="tb-btn" data-menu="file">Arquivo ▾</button>
+      <button class="tb-btn" data-menu="edit">Editar ▾</button>
+      <button class="tb-btn" data-menu="help">Ajuda ▾</button>
+    </div>
+    <input id="projName" class="proj-name" spellcheck="false" aria-label="Nome do projeto">
+    <span id="saveState" class="save-state"></span>
+    <span class="grow"></span>
+    <button class="tb-btn icon" data-act="undo" title="Desfazer (Ctrl+Z)">↶</button>
+    <button class="tb-btn icon" data-act="redo" title="Refazer (Ctrl+Y)">↷</button>
+    <button class="export-btn" data-act="export" title="Exportar (Ctrl+E)">⬇ Exportar</button>
+  </header>
+
+  <div class="body" id="body">
+    <nav class="rail" id="rail">
+      <button data-panel="media" class="on"><i>🎞</i><span>Mídia</span></button>
+      <button data-panel="audio"><i>♫</i><span>Áudio</span></button>
+      <button data-panel="text"><i>T</i><span>Texto</span></button>
+      <button data-panel="captions"><i>💬</i><span>Legendas</span></button>
+      <button data-panel="stickers"><i>☺</i><span>Figurinhas</span></button>
+      <button data-panel="effects"><i>✦</i><span>Efeitos</span></button>
+      <button data-panel="transitions"><i>⇄</i><span>Transições</span></button>
+      <button data-panel="filters"><i>◐</i><span>Filtros</span></button>
+      <button data-panel="ai"><i>✧</i><span>IA</span></button>
+    </nav>
+    <aside class="drawer" id="drawer"></aside>
+
+    <section class="stage" id="stage">
+      <div class="player" id="player">
+        <div class="canvas-box" id="canvasBox">
+          <canvas id="preview"></canvas>
+          <div class="handles" id="handles" hidden>
+            <div class="h-rot" data-h="rot" title="Girar"></div>
+            <div class="h-corner tl" data-h="scale"></div><div class="h-corner tr" data-h="scale"></div>
+            <div class="h-corner bl" data-h="scale"></div><div class="h-corner br" data-h="scale"></div>
+          </div>
+          <div class="guide gx" hidden></div><div class="guide gy" hidden></div>
+        </div>
+        <div class="empty-hint" id="emptyHint">
+          <img class="eh-img" src="icon.png" alt="">
+          <h2>Comece importando seus vídeos</h2>
+          <p>Arraste arquivos para cá ou clique em <b>Importar</b>. Tudo é gratuito: 4K, sem marca d'água, legendas por IA, remoção de fundo e muito mais.</p>
+          <button class="btn primary" data-act="import">＋ Importar mídia</button>
+        </div>
+      </div>
+      <div class="transport">
+        <span class="tc" id="tcNow">00:00:00</span><span class="tc-sep">/</span><span class="tc dim" id="tcDur">00:00:00</span>
+        <span class="grow"></span>
+        <button class="tp" data-act="prevFrame" title="Quadro anterior (←)">⏮</button>
+        <button class="tp play" data-act="play" id="playBtn" title="Reproduzir (Espaço)">▶</button>
+        <button class="tp" data-act="nextFrame" title="Próximo quadro (→)">⏭</button>
+        <span class="grow"></span>
+        <select id="previewQ" class="mini-sel" title="Qualidade da prévia"><option value="1">Prévia: Total</option><option value="0.5">Prévia: 1/2</option><option value="0.33">Prévia: 1/3</option></select>
+        <button class="tp sm" data-act="snapshot" title="Salvar quadro como imagem">📷</button>
+        <button class="tp sm" data-act="fullscreen" title="Tela cheia">⛶</button>
+      </div>
+    </section>
+
+    <aside class="inspector" id="inspector"></aside>
+  </div>
+
+  <div class="splitter" id="splitter" title="Arraste para redimensionar"></div>
+
+  <section class="timeline" id="timeline">
+    <div class="tl-tools">
+      <button class="tt" data-act="split" title="Dividir (S / Ctrl+B)">✂ Dividir</button>
+      <button class="tt" data-act="delete" title="Excluir (Delete)">🗑</button>
+      <button class="tt" data-act="duplicate" title="Duplicar (Ctrl+D)">⧉</button>
+      <button class="tt" data-act="freeze" title="Congelar quadro">❄</button>
+      <button class="tt" data-act="reverse" title="Reverter clipe">⇆</button>
+      <button class="tt" data-act="crop" title="Recortar">⌗</button>
+      <button class="tt" data-act="marker" title="Adicionar marcador (M)">⚑</button>
+      <span class="tt-sep"></span>
+      <button class="tt toggle" data-act="magnet" id="magnetBtn" title="Faixa principal magnética (sem lacunas)">🧲</button>
+      <button class="tt toggle" data-act="snap" id="snapBtn" title="Encaixe automático">⌖</button>
+      <button class="tt" data-act="voiceover" id="voBtn" title="Gravar narração">🎙</button>
+      <span class="grow"></span>
+      <div class="meter" title="Nível de áudio"><i id="meterBar"></i></div>
+      <button class="tt" data-act="zoomOut" title="Diminuir zoom (Ctrl+-)">−</button>
+      <input type="range" id="tlZoom" min="4" max="600" value="80" aria-label="Zoom da linha do tempo">
+      <button class="tt" data-act="zoomIn" title="Aumentar zoom (Ctrl+=)">+</button>
+      <button class="tt" data-act="zoomFit" title="Ajustar à tela">⤢</button>
+    </div>
+    <div class="tl-main">
+      <div class="tl-heads" id="tlHeads"><div class="ruler-pad"></div></div>
+      <div class="tl-scroll" id="tlScroll">
+        <div class="tl-content" id="tlContent">
+          <canvas class="ruler" id="ruler"></canvas>
+          <div class="tracks" id="tracks"></div>
+          <div class="playhead" id="playhead"><i></i></div>
+          <div class="snapline" id="snapline" hidden></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="menu-pop" id="menuPop" hidden></div>
+<div class="toast" id="toast"></div>
+<input type="file" id="fileInput" multiple hidden>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

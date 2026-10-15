@@ -1,0 +1,6 @@
+node_modules/
+dist/
+resources/
+tests/out/
+*.log
+release/
